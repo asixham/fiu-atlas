@@ -1,17 +1,14 @@
 'use client';
 
-import { BuildingList } from '@/components/building-list';
-import { CampusMap } from '@/components/campus-map';
-import { Header } from '@/components/header';
-import { TimeSelector } from '@/components/time-selector';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { BuildingListPanel } from '@/components/building-list-panel';
+import { MapPanel } from '@/components/map-panel';
+import { ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
 import { loadBuildings, getBuildingOccupancy, Building } from '@/lib/fiu-data';
 import { useState, useEffect, useCallback } from 'react';
+import { Header } from '@/components/header';
 import useSWR from 'swr';
 
 export default function Home() {
-  const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(true);
@@ -20,6 +17,17 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const [isTimeSelectorOpen, setIsTimeSelectorOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleLocationToggle = useCallback(() => {
     if (locationEnabled) {
@@ -108,261 +116,84 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-black">
-      <Header />
-
+    <div className="flex h-screen flex-col overflow-hidden bg-zinc-900">
       {isLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-lg">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-900 backdrop-blur-lg">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-neutral-700 border-t-foreground" />
-            <p className="text-sm text-muted-foreground">Loading campus data...</p>
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-foreground" />
+            <Header />
+            {/* <p className="text-sm text-muted-foreground">Loading campus data...</p> */}
           </div>
         </div>
       )}
 
-      <main className="flex-1 overflow-hidden p-0 lg:p-3">
-        <div className="lg:rounded-xl bg-neutral-950 h-full flex flex-col lg:px-6 lg:py-5 px-0 py-0">
-
-          {/* Controls section */}
-          <div className="mb-4 flex flex-col gap-3 lg:mb-6 px-4 lg:px-0 py-4">
-            {/* Mobile: First row with live and location buttons only */}
-            <div className="flex lg:hidden gap-2 items-center">
-              {/* Live button */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    const newDate = new Date();
-                    handleDateChange(newDate);
-                    handleLiveChange(true);
-                  }}
-                  className={`h-9 px-3 rounded-md border transition-colors cursor-pointer gap-2 flex items-center text-sm font-medium ${isLive
-                    ? 'border-success/50 text-success bg-transparent'
-                    : 'border-neutral-800 bg-transparent text-muted-foreground hover:bg-neutral-900/50 hover:text-foreground'
-                    }`}
-                >
-                  {isRefreshing ? (
-                    <svg className="h-3 w-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  ) : isLive ? (
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-                    </span>
-                  ) : null}
-                  {isLive ? 'Live' : 'Now'}
-                </button>
-                {!isLive && (
-                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-warning" />
-                )}
-              </div>
-
-              {/* Location button */}
-              <button
-                onClick={handleLocationToggle}
-                disabled={locationLoading}
-                className={`flex h-9 w-9 items-center justify-center rounded-md border transition-colors cursor-pointer ${locationEnabled
-                  ? 'border-blue-500/50 bg-blue-500/10 text-blue-500'
-                  : 'border-neutral-800 bg-transparent text-muted-foreground hover:bg-neutral-900/50 hover:text-foreground'
-                  }`}
-                title={locationEnabled ? 'Disable location' : 'Share your location'}
-              >
-                {locationLoading ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : (
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-
-            {/* Mobile: Second row with time selection */}
-            <div className="lg:hidden w-full">
-              <TimeSelector
+      <main className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction={isMobile ? 'vertical' : 'horizontal'} className="h-full">
+          {/* On mobile: map first, then handle, then building list */}
+          {/* On desktop: building list first, then handle, then map */}
+          {isMobile ? (
+            <>
+              <MapPanel
+                buildings={buildings}
                 selectedDate={selectedDate}
-                onDateChange={handleDateChange}
-                isLive={isLive}
-                onLiveChange={handleLiveChange}
-                isRefreshing={isRefreshing}
+                selectedBuildingId={selectedBuildingId || undefined}
+                onBuildingSelect={handleBuildingSelect}
+                userLocation={userLocation}
+                isMobile={isMobile}
               />
-            </div>
-
-            {/* Desktop: Single row with live button, location button, time selector, and stats */}
-            <div className="hidden lg:flex flex-row items-center justify-between gap-4">
-              <div className="flex gap-2 items-center">
-                {/* Live button */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      const newDate = new Date();
-                      handleDateChange(newDate);
-                      handleLiveChange(true);
-                    }}
-                    className={`h-9 px-3 rounded-md border transition-colors cursor-pointer gap-2 flex items-center text-sm font-medium ${isLive
-                      ? 'border-success/50 text-success bg-transparent'
-                      : 'border-neutral-800 bg-transparent text-muted-foreground hover:bg-neutral-900/50 hover:text-foreground'
-                      }`}
-                  >
-                    {isRefreshing ? (
-                      <svg className="h-3 w-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                    ) : isLive ? (
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-                      </span>
-                    ) : null}
-                    {isLive ? 'Live' : 'Now'}
-                  </button>
-                  {!isLive && (
-                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-warning" />
-                  )}
-                </div>
-
-                {/* Location button */}
-                <button
-                  onClick={handleLocationToggle}
-                  disabled={locationLoading}
-                  className={`flex h-9 w-9 items-center justify-center rounded-md border transition-colors cursor-pointer ${locationEnabled
-                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-500'
-                    : 'border-neutral-800 bg-transparent text-muted-foreground hover:bg-neutral-900/50 hover:text-foreground'
-                    }`}
-                  title={locationEnabled ? 'Disable location' : 'Share your location'}
-                >
-                  {locationLoading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
-
-                {/* Time selector */}
-                <div className="border-neutral-800">
-                  <TimeSelector
-                    selectedDate={selectedDate}
-                    onDateChange={handleDateChange}
-                    isLive={isLive}
-                    onLiveChange={handleLiveChange}
-                    isRefreshing={isRefreshing}
-                  />
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="flex items-center gap-3 text-sm">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-success" />
-                  <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{campusStats.available}</span> available
-                  </span>
-                </div>
-                <div className="h-3 w-px bg-border" />
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-destructive" />
-                  <span className="text-muted-foreground">
-                    <span className="font-semibold text-foreground">{campusStats.occupied}</span> in use
-                  </span>
-                </div>
-                <div className="h-3 w-px bg-border" />
-                <span className="text-muted-foreground">
-                  <span className="font-semibold text-foreground">{buildings.length}</span> buildings
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Main content - Split layout with resizable panels */}
-          <ResizablePanelGroup direction={isMobile ? 'vertical' : 'horizontal'} className="flex-1 overflow-hidden gap-4 lg:gap-0">
-            {/* Buildings List - Left on desktop, bottom on mobile */}
-            <ResizablePanel collapsible defaultSize={50} minSize={20} className="lg:min-w-0 px-4 lg:px-0 lg:pr-3">
-              <div className="w-full h-full flex flex-col overflow-hidden">
-                {/* Search bar */}
-                <div className="mb-3">
-                  <div className="relative">
-                    <svg
-                      className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                    <input
-                      type="text"
-                      placeholder="Search buildings or rooms..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full rounded-lg border border-neutral-800 bg-neutral-950 py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-neutral-700 focus:outline-none focus:ring-1 focus:ring-neutral-700"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-32 rounded-lg border border-neutral-800 bg-neutral-950">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-                      Loading buildings...
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    <BuildingList
-                      buildings={buildings}
-                      selectedDate={selectedDate}
-                      selectedBuildingId={selectedBuildingId || undefined}
-                      onBuildingSelect={handleBuildingListSelect}
-                      searchQuery={searchQuery}
-                    />
-                  </div>
-                )}
-              </div>
-            </ResizablePanel>
-
-            {/* Divider */}
-            <ResizableHandle withHandle className="px-2 lg:px-0 lg:py-2" />
-
-            {/* Map - Right on desktop, top on mobile */}
-            <ResizablePanel collapsible defaultSize={50} minSize={20} className="lg:min-w-0 lg:px-0 lg:pl-3">
-              <div className="w-full h-full flex flex-col overflow-hidden">
-                <CampusMap
-                  buildings={buildings}
-                  selectedDate={selectedDate}
-                  selectedBuildingId={selectedBuildingId || undefined}
-                  onBuildingSelect={handleBuildingSelect}
-                  userLocation={userLocation}
-                />
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-
-          {/* Footer inside the container */}
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <p className="text-center text-xs text-muted-foreground">
-              Atlas uses FIU class schedule data. Room availability is estimated based on scheduled classes.
-            </p>
-          </div>
-        </div>
+              <ResizableHandle key="handle" withHandle className="h-1 my-4 bg-transparent hover:bg-zinc-800/30 transition-colors" />
+              <BuildingListPanel
+                buildings={buildings}
+                selectedDate={selectedDate}
+                selectedBuildingId={selectedBuildingId || undefined}
+                onBuildingSelect={handleBuildingListSelect}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                isLoading={isLoading}
+                locationEnabled={locationEnabled}
+                locationLoading={locationLoading}
+                onLocationToggle={handleLocationToggle}
+                isLive={isLive}
+                isRefreshing={isRefreshing}
+                isTimeSelectorOpen={isTimeSelectorOpen}
+                onTimeSelectorOpenChange={setIsTimeSelectorOpen}
+                onDateChange={handleDateChange}
+                onLiveChange={handleLiveChange}
+              />
+            </>
+          ) : (
+            <>
+              <BuildingListPanel
+                buildings={buildings}
+                selectedDate={selectedDate}
+                selectedBuildingId={selectedBuildingId || undefined}
+                onBuildingSelect={handleBuildingListSelect}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                isLoading={isLoading}
+                locationEnabled={locationEnabled}
+                locationLoading={locationLoading}
+                onLocationToggle={handleLocationToggle}
+                isLive={isLive}
+                isRefreshing={isRefreshing}
+                isTimeSelectorOpen={isTimeSelectorOpen}
+                onTimeSelectorOpenChange={setIsTimeSelectorOpen}
+                onDateChange={handleDateChange}
+                onLiveChange={handleLiveChange}
+              />
+              <ResizableHandle key="handle" withHandle className="w-1 mx-4 bg-transparent hover:bg-zinc-800/30 transition-colors" />
+              <MapPanel
+                buildings={buildings}
+                selectedDate={selectedDate}
+                selectedBuildingId={selectedBuildingId || undefined}
+                onBuildingSelect={handleBuildingSelect}
+                userLocation={userLocation}
+                isMobile={isMobile}
+              />
+            </>
+          )}
+        </ResizablePanelGroup>
       </main>
-    </div>
+    </div >
   );
 }

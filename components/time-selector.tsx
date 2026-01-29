@@ -2,11 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { CalendarIcon, Clock, Loader2 } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface TimeSelectorProps {
   selectedDate: Date;
@@ -63,44 +61,31 @@ export function TimeSelector({
   };
 
   return (
-    <div className="flex flex-wrap w-full lg:w-fit items-center gap-2">
-      {/* Date picker */}
-      <div className='flex flex-wrap w-fit items-center gap-2'>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                'h-9 justify-start gap-2 text-left bg-transparent font-normal cursor-pointer',
-                !selectedDate && 'text-muted-foreground'
-              )}
-            >
-              <CalendarIcon className="h-4 w-4" />
-              {format(selectedDate, 'MMM d, yyyy')}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+    <div className="flex flex-col w-full gap-4">
+      {/* Calendar */}
+      <Calendar
+        mode="single"
+        selected={selectedDate}
+        onSelect={handleDateSelect}
+        initialFocus
+      />
 
-        {/* Time picker */}
-        <div className="flex items-center rounded-md border shadow-xs">
+      {/* Time picker */}
+      <div className="flex flex-col gap-2 border-t border-zinc-700 pt-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>Enter time</span>
+        </div>
+
+        <div className="flex items-center gap-2">
           <Select
             value={String(selectedDate.getHours())}
             onValueChange={(value) => handleTimeChange('hour', value)}
           >
-            <SelectTrigger className="h-9 gap-3 w-fit cursor-pointer hover:bg-accent hover:text-accent-foreground">
-              <Clock className="h-4 w-4 text-muted-foreground" />
+            <SelectTrigger className="h-9 gap-2 w-fit cursor-pointer bg-transparent border-zinc-700 hover:bg-zinc-700">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="max-h-[200px] ">
+            <SelectContent className="max-h-[200px]">
               {hours.map((hour) => (
                 <SelectItem key={hour} value={String(hour)} className="cursor-pointer">
                   {formatHour(hour)}
@@ -113,7 +98,7 @@ export function TimeSelector({
             value={String(selectedDate.getMinutes())}
             onValueChange={(value) => handleTimeChange('minute', value)}
           >
-            <SelectTrigger className="h-9 w-fit cursor-pointer hover:bg-accent hover:text-accent-foreground">
+            <SelectTrigger className="h-9 gap-2 w-fit cursor-pointer bg-transparent border-zinc-700 hover:bg-zinc-700">
               <SelectValue>{formatMinute(selectedDate.getMinutes())}</SelectValue>
             </SelectTrigger>
             <SelectContent className="max-h-[200px]">
@@ -124,7 +109,6 @@ export function TimeSelector({
               ))}
             </SelectContent>
           </Select>
-
         </div>
       </div>
     </div>

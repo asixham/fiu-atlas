@@ -46,54 +46,61 @@ const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'f
 // Format: [Longitude, Latitude]
 const BUILDING_COORDINATES: Record<string, [number, number]> = {
   // --- Core Campus ---
-  'Green Library': [-80.37452, 25.75538],
-  'Graham Center': [-80.37345, 25.75468],
-  'Charles E. Perry (PC)': [-80.37392, 25.75637],
-  'Deuxieme Maison': [-80.37289, 25.75573],
-  'Owa Ehan': [-80.37168, 25.75612],
-  'Chem & Physics': [-80.37055, 25.75529],
-  'Stocker AstroScience': [-80.37012, 25.75589],
+  'Green Library': [-80.37387941544537, 25.75726384343859],
+  'Graham Center': [-80.37279883736768, 25.756235563409305],
+  'Charles E. Perry (PC)': [-80.37380313905875, 25.755585289867405],
+  'Deuxieme Maison': [-80.37468429416529, 25.756185299118933],
+  'Owa Ehan': [-80.37295105114137, 25.758093407917986],
+  'Chem & Physics': [-80.37222323214473, 25.758373982818195],
+  'Stocker AstroScience': [-80.372558158972, 25.75791350895314],
 
   // --- Business & Management ---
-  'Ryder Business': [-80.37098, 25.75691],
-  'College of Business Complex': [-80.37198, 25.75727],
-  'Mgmt and New Growth Opp': [-80.37142, 25.75659], // MANGO
+  'Ryder Business': [-80.37612541659684, 25.757430885973932],
+  'College Business Complex': [-80.3770406180777, 25.758031725071078],
+  'Mgmt and New Growth Opp': [-80.37696280603302, 25.757463260095147], // MANGO
 
   // --- International & Public Affairs ---
-  'SIPA': [-80.37238, 25.75598], // Main SIPA entrance
-  'SCH INTER & PUB AFFAIR 1': [-80.37254, 25.75609],
-  'SCH INTNL & PUB AFFAIRS 2': [-80.37222, 25.75587],
-  'Labor Center': [-80.37189, 25.75654],
+  'SCH INTER & PUB AFFAIR 1': [-80.37626685994533, 25.756513707335138],
+  'SCH INTNL & PUB AFFAIRS 2': [-80.37667399757984, 25.756517804408123],
+  'Labor Center': [-80.37715883776042, 25.75654979372263],
 
   // --- Health & Sciences (East Side) ---
-  'Academic Health Center 3': [-80.37011, 25.75378],
-  'Academic Health Center 4': [-80.36952, 25.75342],
-  'Academic Health Center 5': [-80.36895, 25.75309],
-  'Innovation 1': [-80.36743, 25.75267],
+  'Academic Health Center 1': [-80.37138831829029, 25.757652335892992],
+  'Academic Center Two': [-80.37129544986662, 25.75819002705321],
+  'Academic Health Center 3': [-80.37137607127403, 25.75881998502289],
+  'Academic Health Center 4': [-80.372293242273, 25.759326155836145],
+  'Academic Health Center 5': [-80.37115089756057, 25.759189308566473],
+  'Innovation 1': [-80.36934181677428, 25.760609348960426],
 
   // --- West Campus (Law, Architecture, Arts) ---
-  'Rafael Diaz-Balart': [-80.37628, 25.75485], // CORRECTED: Moved from East to West side
-  'Paul Cejas Architecture': [-80.37593, 25.75398],
-  'Ziff Education Bldg': [-80.37412, 25.75462],
-  'Viertes Haus': [-80.37352, 25.75404],
-  'Comp, Arts, Sci & Educat': [-80.37456, 25.75387], // CASE
+  'Rafael Diaz Balart': [-80.37777433201501, 25.75681213931396],
+  'Paul Cejas Architecture': [-80.37528733209065, 25.75895882361899],
+  'Ziff Education Bldg': [-80.37676102127567, 25.75903305722242],
+  'Viertes Haus': [-80.37471040564922, 25.757971805490456],
+  'Comp, Arts, Sci & Educat': [-80.37385154509248, 25.759086503993288], // CASE
 
   // --- Engineering ---
-  'Engineering Center': [-80.36622, 25.77232], // CORRECTED: This is the Flagler Campus (Off-site)
-  'Eng. & Comp. Science (ECS)': [-80.37175, 25.75545], // ADDED: The Engineering bldg ON MMC campus
+  'Engineering Center': [-80.36773876923758, 25.77002291187089],
 
   // --- Student Life & Athletics ---
-  'Ocean Bank Convoc Center': [-80.36812, 25.75198],
-  'Student Acad Success Cntr': [-80.37321, 25.75689],
-  'Parking Garage 6': [-80.36987, 25.75234],
-  'PG5 MARKET STATION': [-80.37054, 25.75189],
+  'Ocean Bank Convoc Center': [-80.37959043658789, 25.75696342243802],
+  'Student Acad Success Cntr': [-80.37139571769416, 25.75572440171293],
+  'Parking Garage 6': [-80.37457046626925, 25.760205480481076],
+  'PG5 MARKET STATION': [-80.37165071049701, 25.760202651626887],
 
   // --- Studios / West Complex ---
-  'West 1 Room': [-80.37654, 25.75487],
-  'West 9 Room': [-80.37712, 25.75423],
-  'West 10 (W10)': [-80.37756, 25.75387],
-  'Art Studio Room': [-80.37698, 25.75512],
-  'Studio W1C': [-80.37632, 25.75467],
+  'West 1 Room': [-80.38232312649168, 25.752773949830647],
+  'West 9 Room': [-80.38265923738535, 25.756823001958796],
+  'West 10 (W10)': [-80.38295198464573, 25.756900383916417],
+  'West 10A Room': [-80.38362594577217, 25.757271453137797],
+  'Art Studio Room': [-80.38117218608232, 25.75303124603555],
+  'Studio W1C': [-80.38151688711187, 25.752779120671743],
+
+  'Wertheim Prf Arts Ctr': [-80.37265870279163, 25.75254878732886],
+  'Jelke/Sigma Phi Epsilon': [-80.36997107141251, 25.753617088248895],
+  'Wertheim Conservatory': [-80.37304727638077, 25.759346264521987],
+  'Mgmt & Advanced Resrch Ctr': [-80.373283693317, 25.75460211003198],
+  'FIU Downtown Brickell S': [-80.19096504676872, 25.763227144721178],
 
   default: [-80.37337, 25.75469], // Graham Center as default
 };
@@ -265,12 +272,12 @@ function processClassData(classes: ClassRow[]): Building[] {
 export async function loadBuildings(): Promise<Building[]> {
   try {
     const supabase = createClient();
-    
+
     // Fetch all classes with pagination to avoid default 1000 row limit
     const allClasses: ClassRow[] = [];
     let offset = 0;
     const pageSize = 1000;
-    
+
     while (true) {
       const { data: classes, error } = await supabase
         .from('classes')
@@ -288,11 +295,11 @@ export async function loadBuildings(): Promise<Building[]> {
       }
 
       allClasses.push(...(classes as ClassRow[]));
-      
+
       if (classes.length < pageSize) {
         break;
       }
-      
+
       offset += pageSize;
     }
 

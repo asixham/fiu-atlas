@@ -11,6 +11,7 @@ interface CampusMapProps {
   selectedBuildingId?: string;
   onBuildingSelect?: (building: Building) => void;
   userLocation?: [number, number] | null;
+  isMobile?: boolean;
 }
 
 export function CampusMap({
@@ -19,6 +20,7 @@ export function CampusMap({
   selectedBuildingId,
   onBuildingSelect,
   userLocation,
+  isMobile = false,
 }: CampusMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -30,7 +32,7 @@ export function CampusMap({
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
 
   // FIU MMC campus center coordinates
-  const FIU_CENTER: [number, number] = [-80.3728, 25.7545];
+  const FIU_CENTER: [number, number] = [-80.37621507143407, 25.75677363629563];
 
   useEffect(() => {
     // Fetch token from server API to avoid exposing in client bundle
@@ -139,16 +141,15 @@ export function CampusMap({
 
       // Create simple marker element
       const el = document.createElement('div');
-      const size = isSelected ? 24 : 16;
-      const borderWidth = isSelected ? 3 : 2;
+      const size = isSelected ? 12 : 8;
+      const glowColor = color + '80';
 
       el.style.width = `${size}px`;
       el.style.height = `${size}px`;
       el.style.backgroundColor = color;
-      el.style.border = `${borderWidth}px solid ${isSelected ? '#fff' : 'rgba(255,255,255,0.8)'}`;
       el.style.borderRadius = '50%';
       el.style.cursor = 'pointer';
-      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.35)';
+      el.style.boxShadow = `0 0 2px 2px ${glowColor}`;
       el.style.transition = 'box-shadow 0.15s ease';
       if (isSelected) {
         el.style.zIndex = '10';
@@ -229,6 +230,7 @@ export function CampusMap({
         center: building.coordinates,
         zoom: 17,
         duration: 800,
+        pitch: 20
       });
 
       // Auto-pin the popup when a building is selected
@@ -285,14 +287,18 @@ export function CampusMap({
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: FIU_CENTER,
-      zoom: 15.5,
-      pitch: 0,
-      bearing: 0,
-    });
+      style: 'mapbox://styles/mapbox/standard',
+      config: {
+        basemap: {
+          lightPreset: "dusk",
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        }
+      },
+      center: FIU_CENTER,
+      zoom: 16,
+      pitch: 70,
+      bearing: 60,
+    });
 
     map.current.on('load', () => {
       setMapLoaded(true);
@@ -328,7 +334,7 @@ export function CampusMap({
 
   if (!mapboxToken) {
     return (
-      <div className="relative h-full w-full overflow-hidden rounded-lg border border-border bg-neutral-950">
+      <div className={`relative h-full w-full overflow-hidden border border-border bg-neutral-950 ${isMobile ? 'rounded-lg' : ''}`}>
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-900">
             <svg
@@ -382,13 +388,10 @@ export function CampusMap({
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden lg:rounded-lg border border-border">
+    <div className={`relative h-full w-full overflow-hidden border border-border ${isMobile ? 'rounded-lg' : ''}`}>
       <div ref={mapContainer} className="h-full w-full" />
       {/* Legend */}
-      <div className="absolute bottom-8 left-3 rounded-lg border border-neutral-800 bg-neutral-950/95 p-2.5 backdrop-blur-sm">
-        <div className="mb-1.5 text-[10px] font-medium text-foreground">
-          Availability
-        </div>
+      <div className="absolute bottom-10 left-3 rounded-lg bg-zinc-900 p-2.5 backdrop-blur-sm">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-[#22c55e]" />

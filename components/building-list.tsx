@@ -67,11 +67,11 @@ export function BuildingList({
   const query = searchQuery.toLowerCase().trim();
   const filteredBuildings = buildings.filter((building) => {
     if (!query) return true;
-    
+
     // Match building name or short name
     if (building.name.toLowerCase().includes(query)) return true;
     if (building.shortName.toLowerCase().includes(query)) return true;
-    
+
     // Match any room number
     const hasMatchingRoom = building.rooms.some((room) =>
       room.number.toLowerCase().includes(query)
@@ -130,14 +130,14 @@ export function BuildingList({
             key={building.id}
             ref={(el) => { buildingRefs.current[building.id] = el; }}
             className={cn(
-              'rounded-lg border border-border bg-neutral-950 transition-all',
-              isSelected && 'border-neutral-700 ring-1 ring-neutral-700/30'
+              'rounded-lg border border-zinc-700 bg-zinc-900 transition-all',
+              isSelected && 'border-zinc-700 ring-1 ring-zinc-700/30'
             )}
           >
             {/* Building Header */}
             <button
               onClick={() => handleBuildingClick(building.id)}
-              className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-neutral-900/40 cursor-pointer"
+              className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-zinc-800 cursor-pointer"
             >
               {/* <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-900">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -174,7 +174,7 @@ export function BuildingList({
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="3"
-                      className="text-neutral-800"
+                      className="text-zinc-700"
                     />
                     {/* Progress circle */}
                     <circle
@@ -213,7 +213,7 @@ export function BuildingList({
 
             {/* Rooms Dropdown */}
             {isExpanded && (
-              <div className="border-t border-border">
+              <div className="border-t border-zinc-800">
                 <div className="max-h-80 overflow-y-auto custom-scrollbar">
                   {rooms.length === 0 ? (
                     <div className="px-4 py-6 text-center text-sm text-muted-foreground">
@@ -229,14 +229,14 @@ export function BuildingList({
                           <div
                             key={room.id}
                             className={cn(
-                              'transition-colors bg-neutral-950',
+                              'transition-colors bg-zinc-800/30',
                               status.isOccupied ? 'border-l-2 border-l-destructive/30' : 'border-l-2 border-l-success/30'
                             )}
                           >
                             {/* Room Header */}
                             <button
                               onClick={(e) => handleRoomClick(room.id, e)}
-                              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-neutral-900/40 transition-colors cursor-pointer"
+                              className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-zinc-700/40 transition-colors cursor-pointer"
                             >
                               <div className="flex items-center gap-3">
                                 <span
@@ -283,7 +283,7 @@ export function BuildingList({
 
                             {/* Room Timeline */}
                             {isRoomExpanded && (
-                              <div className="px-4 pb-3 pt-1 bg-neutral-900/50">
+                              <div className="px-4 pb-3 pt-1 bg-zinc-700/20">
                                 <RoomTimeline
                                   sessions={room.sessions}
                                   selectedDate={selectedDate}
