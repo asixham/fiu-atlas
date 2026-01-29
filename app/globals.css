@@ -121,13 +121,29 @@
 
 /* Mapbox popup styles */
 .atlas-popup .mapboxgl-popup-content {
-  background: rgb(10, 10, 10);
-  border: 1px solid rgb(38, 38, 38);
+  background: rgb(24, 24, 27);
+  border: 1px solid rgb(39, 39, 42);
   border-radius: 8px;
   padding: 10px 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .atlas-popup .mapboxgl-popup-tip {
-  border-top-color: rgb(10, 10, 10);
+  border-top-color: rgb(24, 24, 27) !important;
+}
+
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: rgb(24, 24, 27) !important;
+}
+
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: rgb(24, 24, 27) !important;
+}
+
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: rgb(24, 24, 27) !important;
+}
+
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: rgb(24, 24, 27) !important;
 }
