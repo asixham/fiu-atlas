@@ -116,7 +116,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex h-screen z-50 flex-col overflow-hidden bg-zinc-900">
+    <div className="flex h-dvh z-50 flex-col overflow-hidden bg-zinc-900">
       {isLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-900 backdrop-blur-lg">
           <div className="flex flex-col items-center gap-4">

@@ -1,9 +1,23 @@
 'use client';
 
 import { Building, getBuildingOccupancy } from '@/lib/fiu-data';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { InfoIcon } from 'lucide-react';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+
+const PERFORMANCE_MODE_STORAGE_KEY = 'fiu-atlas-performance-mode';
 
 interface CampusMapProps {
   buildings: Building[];
@@ -32,6 +46,10 @@ export function CampusMap({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isResizing, setIsResizing] = useState(false);
+  const [isPerformanceMode, setIsPerformanceMode] = useState<boolean | null>(null);
+  const [performanceModalOpen, setPerformanceModalOpen] = useState(false);
+  const [manualPerformanceOverride, setManualPerformanceOverride] = useState<boolean | null>(null);
+  const [manualOverrideLoaded, setManualOverrideLoaded] = useState(false);
 
   // FIU MMC campus center coordinates
   const FIU_CENTER: [number, number] = [-80.37621507143407, 25.75677363629563];
@@ -49,6 +67,81 @@ export function CampusMap({
         console.error('Failed to fetch Mapbox token:', err);
       });
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const storedValue = window.localStorage.getItem(PERFORMANCE_MODE_STORAGE_KEY);
+    if (storedValue === 'true') {
+      setManualPerformanceOverride(true);
+    } else if (storedValue === 'false') {
+      setManualPerformanceOverride(false);
+    }
+
+    setManualOverrideLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!manualOverrideLoaded || typeof window === 'undefined') return;
+
+    if (manualPerformanceOverride === null) {
+      window.localStorage.removeItem(PERFORMANCE_MODE_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(
+        PERFORMANCE_MODE_STORAGE_KEY,
+        manualPerformanceOverride ? 'true' : 'false',
+      );
+    }
+  }, [manualPerformanceOverride, manualOverrideLoaded]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !manualOverrideLoaded) return;
+
+    if (manualPerformanceOverride !== null) {
+      setIsPerformanceMode(manualPerformanceOverride);
+      return;
+    }
+
+    const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const detectPerformanceNeeds = (prefersReducedMotion: boolean) => {
+      const lowCores = typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? navigator.hardwareConcurrency < 4 : false;
+      const deviceMemory = typeof navigator !== 'undefined' && 'deviceMemory' in navigator ? (navigator as unknown as { deviceMemory?: number }).deviceMemory : undefined;
+      const lowMemory = typeof deviceMemory === 'number' ? deviceMemory < 4 : false;
+
+      const shouldReduce = prefersReducedMotion || lowCores || lowMemory;
+      setIsPerformanceMode(shouldReduce);
+    };
+
+    detectPerformanceNeeds(mediaQuery?.matches ?? false);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      detectPerformanceNeeds(event.matches);
+    };
+
+    if (mediaQuery) {
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', handleChange);
+      } else if (typeof mediaQuery.addListener === 'function') {
+        mediaQuery.addListener(handleChange);
+      }
+    }
+
+    return () => {
+      if (!mediaQuery) return;
+      if (typeof mediaQuery.removeEventListener === 'function') {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else if (typeof mediaQuery.removeListener === 'function') {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, [isMobile, manualPerformanceOverride, manualOverrideLoaded]);
+
+  const effectivePerformanceMode = useMemo(() => {
+    if (manualPerformanceOverride !== null) {
+      return manualPerformanceOverride;
+    }
+    return isPerformanceMode;
+  }, [isPerformanceMode, manualPerformanceOverride]);
 
   const getMarkerColor = useCallback(
     (building: Building) => {
@@ -143,38 +236,41 @@ export function CampusMap({
 
       // Create simple marker element
       const el = document.createElement('div');
-      const size = isSelected ? 12 : 8;
-      const glowColor = color + '80';
+      const performanceModeActive = effectivePerformanceMode ?? false;
+      const size = performanceModeActive ? (isSelected ? 10 : 6) : isSelected ? 12 : 8;
+      const glowColor = performanceModeActive ? color + '40' : color + '80';
 
       el.style.width = `${size}px`;
       el.style.height = `${size}px`;
       el.style.backgroundColor = color;
       el.style.borderRadius = '50%';
       el.style.cursor = 'pointer';
-      el.style.boxShadow = `0 0 2px 2px ${glowColor}`;
+      el.style.boxShadow = performanceModeActive ? `0 1px 4px ${glowColor}` : `0 0 2px 2px ${glowColor}`;
       el.style.transition = 'box-shadow 0.15s ease';
       if (isSelected) {
         el.style.zIndex = '10';
       }
 
-      el.addEventListener('mouseenter', () => {
-        el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
-        // Only show on hover if no popup is pinned
-        if (!pinnedBuildingRef.current) {
-          popup
-            .setLngLat(building.coordinates)
-            .setHTML(createPopupContent(building))
-            .addTo(map.current!);
-        }
-      });
+      if (!performanceModeActive) {
+        el.addEventListener('mouseenter', () => {
+          el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+          // Only show on hover if no popup is pinned
+          if (!pinnedBuildingRef.current) {
+            popup
+              .setLngLat(building.coordinates)
+              .setHTML(createPopupContent(building))
+              .addTo(map.current!);
+          }
+        });
 
-      el.addEventListener('mouseleave', () => {
-        el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.35)';
-        // Only hide on mouseleave if this building's popup is not pinned
-        if (pinnedBuildingRef.current !== building.id) {
-          popup.remove();
-        }
-      });
+        el.addEventListener('mouseleave', () => {
+          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.35)';
+          // Only hide on mouseleave if this building's popup is not pinned
+          if (pinnedBuildingRef.current !== building.id) {
+            popup.remove();
+          }
+        });
+      }
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -220,6 +316,7 @@ export function CampusMap({
     createPopupContent,
     onBuildingSelect,
     mapLoaded,
+    effectivePerformanceMode,
   ]);
 
   // Pan to selected building and show pinned popup
@@ -283,23 +380,24 @@ export function CampusMap({
   }, [userLocation, mapLoaded]);
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || map.current) return;
+    if (!mapContainer.current || !mapboxToken || map.current || effectivePerformanceMode === null) return;
 
     mapboxgl.accessToken = mapboxToken;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/standard',
+      style: effectivePerformanceMode ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/standard',
       config: {
         basemap: {
-          lightPreset: "dusk",
-
+          lightPreset: effectivePerformanceMode ? 'dusk' : 'dusk',
         }
       },
       center: FIU_CENTER,
-      zoom: 16,
-      pitch: 70,
-      bearing: 60,
+      zoom: effectivePerformanceMode ? 15.5 : 16,
+      pitch: effectivePerformanceMode ? 0 : 70,
+      bearing: effectivePerformanceMode ? 0 : 60,
+      dragRotate: !effectivePerformanceMode,
+      touchZoomRotate: !effectivePerformanceMode,
     });
 
     map.current.on('load', () => {
@@ -343,7 +441,21 @@ export function CampusMap({
       map.current?.remove();
       map.current = null;
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, effectivePerformanceMode]);
+
+  useEffect(() => {
+    if (!map.current || effectivePerformanceMode === null) return;
+
+    if (effectivePerformanceMode) {
+      map.current.dragRotate.disable();
+      map.current.touchZoomRotate.disableRotation();
+      map.current.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+    } else {
+      map.current.dragRotate.enable();
+      map.current.touchZoomRotate.enableRotation();
+      map.current.easeTo({ pitch: 70, bearing: 60, duration: 600 });
+    }
+  }, [effectivePerformanceMode]);
 
   useEffect(() => {
     updateMarkers();
@@ -412,6 +524,51 @@ export function CampusMap({
           Release to update map view
         </div>
       )}
+      <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-zinc-900/80 px-4 py-2 text-sm font-medium text-muted-foreground">
+        <span>
+          {effectivePerformanceMode ? 'Performance mode enabled' : 'Performance mode off'}
+        </span>
+        <button
+          type="button"
+          className="flex cursor-pointer h-6 w-6 items-center justify-center rounded-full bg-zinc-800/80 text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setPerformanceModalOpen(true)}
+        >
+          <InfoIcon className="h-3.5 w-3.5" />
+          <span className="sr-only">Performance mode info</span>
+        </button>
+      </div>
+      <Dialog open={performanceModalOpen} onOpenChange={setPerformanceModalOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-4xl">
+          <DialogHeader>
+            <DialogTitle>Performance mode</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 text-sm text-muted-foreground">
+            <p>Your device might benefit from a lighter map experience. Performance mode reduces visual effects to keep things responsive.</p>
+            <p>This mode lowers map detail, disables 3D rotation, and simplifies markers so older or battery-constrained devices render the map smoothly.</p>
+            <div className="flex items-center justify-between rounded-full border border-zinc-700/60 bg-zinc-900/60 px-6 py-3">
+              <div>
+                <p className="text-foreground text-sm font-medium">Performance mode</p>
+                <p className="text-xs text-muted-foreground">Toggle to balance smoothness and visuals.</p>
+              </div>
+              <Switch
+                checked={effectivePerformanceMode ?? false}
+                onCheckedChange={(checked) => {
+                  setManualPerformanceOverride(checked);
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className='rounded-full' onClick={() => {
+              setManualPerformanceOverride(null);
+              setPerformanceModalOpen(false);
+            }}>
+              Reset to automatic
+            </Button>
+            <Button variant="default" className='rounded-full' onClick={() => setPerformanceModalOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Legend */}
       <div className="absolute bottom-10 left-3 rounded-lg bg-zinc-900 p-2.5 backdrop-blur-sm">
         <div className="flex flex-col gap-1">
