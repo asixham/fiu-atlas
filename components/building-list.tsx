@@ -35,18 +35,26 @@ export function BuildingList({
   const [expandedRoom, setExpandedRoom] = useState<string | null>(null);
   const buildingRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  const scrollBuildingIntoView = (buildingId: string) => {
+    const element = buildingRefs.current[buildingId];
+    if (!element) return;
+
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+      inline: 'nearest',
+    });
+  };
+
   // Sync expanded state with selectedBuildingId (for map clicks)
   useEffect(() => {
     if (selectedBuildingId && selectedBuildingId !== expandedBuilding) {
       setExpandedBuilding(selectedBuildingId);
       setExpandedRoom(null);
       // Scroll the building into view
-      setTimeout(() => {
-        buildingRefs.current[selectedBuildingId]?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }, 100);
+      requestAnimationFrame(() => {
+        scrollBuildingIntoView(selectedBuildingId);
+      });
     } else if (!selectedBuildingId && expandedBuilding) {
       setExpandedBuilding(null);
       setExpandedRoom(null);
@@ -58,6 +66,12 @@ export function BuildingList({
     setExpandedBuilding(newExpanded);
     setExpandedRoom(null); // Close any open room when switching buildings
     onBuildingSelect?.(newExpanded);
+
+    if (newExpanded) {
+      requestAnimationFrame(() => {
+        scrollBuildingIntoView(newExpanded);
+      });
+    }
   };
 
   const handleRoomClick = (roomId: string, e: React.MouseEvent) => {
