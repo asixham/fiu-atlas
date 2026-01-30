@@ -51,7 +51,29 @@ export function BuildingListPanel({
         {/* Header */}
         <div className='flex items-center px-4 justify-between'>
           <Header />
-          <FeedbackModal />
+          <div className='flex items-center gap-3'>
+            <button
+              type="button"
+              onClick={onLocationToggle}
+              disabled={locationLoading}
+              className={`flex h-9 items-center justify-center rounded-md border px-3 transition-colors cursor-pointer ${locationEnabled
+                ? 'border-blue-600/50 bg-blue-500/10 text-blue-400'
+                : 'border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground'
+                }`}
+              title={locationEnabled ? 'Disable location' : 'Share your location'}
+            >
+              {locationLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </button>
+            <FeedbackModal />
+          </div>
+
         </div>
         {/* Controls */}
         <div className="flex items-center px-4 gap-3 py-4">
@@ -72,11 +94,11 @@ export function BuildingListPanel({
             </svg>
             <input
               type="text"
-              placeholder="Search"
               value={searchQuery}
+              placeholder="Search buildings..."
               onChange={(e) => onSearchChange(e.target.value)}
               style={{ fontSize: '16px' }}
-              className="h-9 w-full rounded-lg border border-zinc-700 py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600"
+              className="h-9 w-full rounded-lg border border-zinc-700 py-2 pl-10 pr-4 text-foreground placeholder:text-muted-foreground focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600"
             />
             {searchQuery && (
               <button
@@ -95,7 +117,7 @@ export function BuildingListPanel({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="h-9 px-3 rounded-md border border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-colors cursor-pointer text-sm flex items-center gap-2 w-fit"
+                className="h-9 px-3 rounded-md border border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-colors cursor-pointer flex items-center gap-2 w-fit"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {/* Live indicator - clickable to activate live mode */}
@@ -125,10 +147,10 @@ export function BuildingListPanel({
                     ) : (
                       <span className="h-2 w-2 flex-shrink-0 rounded-full bg-zinc-500" />
                     )}
-                    <span className="text-xs font-medium whitespace-nowrap">Live</span>
+                    <span className="font-medium whitespace-nowrap">Live</span>
                   </div>
                   {/* Date and time */}
-                  <span className="text-xs whitespace-nowrap truncate">
+                  <span className="whitespace-nowrap truncate">
                     {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {selectedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -151,25 +173,6 @@ export function BuildingListPanel({
           </Popover>
 
           {/* Location button - always visible */}
-          <button
-            type="button"
-            onClick={onLocationToggle}
-            disabled={locationLoading}
-            className={`flex h-9 items-center justify-center rounded-md border px-3 transition-colors cursor-pointer ${locationEnabled
-              ? 'border-blue-600/50 bg-blue-500/10 text-blue-400'
-              : 'border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground'
-              }`}
-            title={locationEnabled ? 'Disable location' : 'Share your location'}
-          >
-            {locationLoading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : (
-              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            )}
-          </button>
         </div>
 
         {/* List */}

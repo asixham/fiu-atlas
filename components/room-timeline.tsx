@@ -195,7 +195,7 @@ export function RoomTimeline({ sessions, selectedDate }: RoomTimelineProps) {
             transform: 'translate(-50%, -100%)',
           }}
         >
-          <div className="bg-popover border border-border rounded-md px-3 py-2 shadow-lg text-xs">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 shadow-lg text-xs">
             <div className="font-medium text-foreground mb-1">
               {formatTime(hoveredBlock.startTime)} - {formatTime(hoveredBlock.endTime)}
             </div>

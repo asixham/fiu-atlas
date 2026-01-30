@@ -61,7 +61,7 @@ export function TimeSelector({
   };
 
   return (
-    <div className="flex flex-col w-full gap-4">
+    <div className="flex flex-col w-full">
       {/* Calendar */}
       <Calendar
         mode="single"
@@ -71,8 +71,8 @@ export function TimeSelector({
       />
 
       {/* Time picker */}
-      <div className="flex flex-col gap-2 border-t border-zinc-700 pt-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex flex-col border-t border-zinc-700">
+        <div className="flex items-center py-4 gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span>Enter time</span>
         </div>
@@ -85,7 +85,7 @@ export function TimeSelector({
             <SelectTrigger className="h-9 gap-2 w-fit cursor-pointer bg-transparent border-zinc-700 hover:bg-zinc-700">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="max-h-[200px]">
+            <SelectContent className="max-h-[200px] bg-zinc-800">
               {hours.map((hour) => (
                 <SelectItem key={hour} value={String(hour)} className="cursor-pointer">
                   {formatHour(hour)}
@@ -101,7 +101,7 @@ export function TimeSelector({
             <SelectTrigger className="h-9 gap-2 w-fit cursor-pointer bg-transparent border-zinc-700 hover:bg-zinc-700">
               <SelectValue>{formatMinute(selectedDate.getMinutes())}</SelectValue>
             </SelectTrigger>
-            <SelectContent className="max-h-[200px]">
+            <SelectContent className="max-h-[200px] bg-zinc-800">
               {minutes.map((minute) => (
                 <SelectItem key={minute} value={String(minute)} className="cursor-pointer">
                   {formatMinute(minute)}
