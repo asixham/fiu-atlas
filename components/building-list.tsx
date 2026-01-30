@@ -148,14 +148,14 @@ export function BuildingList({
               key={building.id}
               ref={(el) => { buildingRefs.current[building.id] = el; }}
               className={cn(
-                'rounded-lg border border-zinc-700 bg-zinc-900 transition-all',
-                isSelected && 'border-zinc-700 ring-1 ring-zinc-700/30'
+                'bg-zinc-800 overflow-hidden rounded-2xl transition-all',
+                isSelected && ''
               )}
             >
               {/* Building Header */}
               <button
                 onClick={() => handleBuildingClick(building.id)}
-                className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-zinc-800 cursor-pointer"
+                className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-zinc-700/40 cursor-pointer"
               >
                 {/* <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-900">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -182,8 +182,8 @@ export function BuildingList({
 
                 <div className="flex shrink-0 items-center gap-2">
                   {/* Radial Progress */}
-                  <div className="relative h-10 w-10">
-                    <svg className="h-10 w-10 -rotate-90" viewBox="0 0 36 36">
+                  <div className="relative h-12 w-12">
+                    <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
                       {/* Background circle */}
                       <circle
                         cx="18"
@@ -232,13 +232,13 @@ export function BuildingList({
               {/* Rooms Dropdown */}
               {isExpanded && (
                 <div className="border-t border-zinc-800">
-                  <div className="max-h-100 overflow-y-auto custom-scrollbar">
+                  <div className="max-h-100 pb-2 overflow-y-auto custom-scrollbar">
                     {rooms.length === 0 ? (
                       <div className="px-4 py-6 text-center text-base text-muted-foreground">
                         No room data available
                       </div>
                     ) : (
-                      <div className="divide-y divide-border/50">
+                      <div className="divide-y divide-zinc-700">
                         {rooms.map((room) => {
                           const status = getRoomStatus(room, selectedDate);
                           const isRoomExpanded = expandedRoom === room.id;

@@ -28,8 +28,10 @@ export function CampusMap({
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const pinnedBuildingRef = useRef<string | null>(null);
+  const resizeTimeoutRef = useRef<number | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
 
   // FIU MMC campus center coordinates
   const FIU_CENTER: [number, number] = [-80.37621507143407, 25.75677363629563];
@@ -314,15 +316,30 @@ export function CampusMap({
 
     // Add ResizeObserver to handle container size changes (e.g., from resizable panels)
     const resizeObserver = new ResizeObserver(() => {
-      if (map.current) {
-        map.current.resize();
+      if (!map.current) return;
+
+      setIsResizing(true);
+      map.current.resize();
+
+      if (resizeTimeoutRef.current !== null) {
+        window.clearTimeout(resizeTimeoutRef.current);
       }
+
+      resizeTimeoutRef.current = window.setTimeout(() => {
+        map.current?.resize();
+        setIsResizing(false);
+        resizeTimeoutRef.current = null;
+      }, 200);
     });
 
     resizeObserver.observe(mapContainer.current);
 
     return () => {
       resizeObserver.disconnect();
+      if (resizeTimeoutRef.current !== null) {
+        window.clearTimeout(resizeTimeoutRef.current);
+        resizeTimeoutRef.current = null;
+      }
       map.current?.remove();
       map.current = null;
     };
@@ -390,6 +407,11 @@ export function CampusMap({
   return (
     <div className={`relative h-full w-full overflow-hidden border border-border ${isMobile ? 'rounded-lg' : ''}`}>
       <div ref={mapContainer} className="h-full w-full" />
+      {isResizing && (
+        <div className="pointer-events-none z-10 absolute inset-0 flex items-center justify-center bg-zinc-950 backdrop-blur-sm text-xs font-medium text-muted-foreground">
+          Release to update map view
+        </div>
+      )}
       {/* Legend */}
       <div className="absolute bottom-10 left-3 rounded-lg bg-zinc-900 p-2.5 backdrop-blur-sm">
         <div className="flex flex-col gap-1">

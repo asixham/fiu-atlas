@@ -61,14 +61,14 @@ export function FeedbackModal() {
             <button
                 onClick={() => setOpen(true)}
                 type="button"
-                className="h-9 px-3 rounded-md border border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-colors cursor-pointer text-sm flex items-center gap-2 w-fit"
+                className="p-3 rounded-full border border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-colors cursor-pointer text-sm flex items-center gap-2 w-fit"
             >
                 <MessageSquare className="h-4 w-4 flex-shrink-0" />
                 {/* <span className="text-xs font-medium whitespace-nowrap">Share Feedback</span> */}
             </button>
 
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="rounded-4xl sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Share Feedback</DialogTitle>
                         <DialogDescription>
@@ -89,13 +89,13 @@ export function FeedbackModal() {
                         <div className="flex flex-col gap-4">
                             {/* Message */}
                             <div className="flex flex-col gap-2">
-                                <Label htmlFor="message">Message</Label>
+                                <Label htmlFor="message" className='pl-3'>Message</Label>
                                 <Textarea
                                     id="message"
                                     placeholder="Tell us what you think..."
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
-                                    className="resize-none outline-none bg-zinc-800 border-zinc-700 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600"
+                                    className="resize-none outline-none rounded-3xl p-3 border-zinc-700 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600"
                                     rows={4}
                                 />
                             </div>
@@ -116,13 +116,13 @@ export function FeedbackModal() {
                             {/* Email field - only show if checkbox is checked */}
                             {includeEmail && (
                                 <div className="flex flex-col gap-2">
-                                    <Label htmlFor="email">Email</Label>
+                                    <Label htmlFor="email" className='pl-3'>Email</Label>
                                     <Input
                                         id="email"
                                         type="email"
                                         placeholder="your@email.com"
                                         value={email}
-                                        className="resize-none outline-none bg-zinc-800 border-zinc-700 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600"
+                                        className="resize-none outline-none rounded-full border-zinc-700 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600"
                                         onChange={(e) => setEmail(e.target.value)}
                                     />
                                 </div>
@@ -132,7 +132,7 @@ export function FeedbackModal() {
                             <Button
                                 onClick={handleSubmit}
                                 disabled={!isValid || loading}
-                                className="w-full"
+                                className="w-full rounded-full"
                             >
                                 {loading ? (
                                     <>

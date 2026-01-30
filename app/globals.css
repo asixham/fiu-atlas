@@ -122,7 +122,6 @@
 /* Mapbox popup styles */
 .atlas-popup .mapboxgl-popup-content {
   background: rgb(24, 24, 27);
-  border: 1px solid rgb(39, 39, 42);
   border-radius: 8px;
   padding: 10px 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);

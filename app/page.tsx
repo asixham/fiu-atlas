@@ -116,7 +116,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-zinc-900">
+    <div className="flex h-screen z-50 flex-col overflow-hidden bg-zinc-900">
       {isLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-900 backdrop-blur-lg">
           <div className="flex flex-col items-center gap-4">
@@ -141,7 +141,7 @@ export default function Home() {
                 userLocation={userLocation}
                 isMobile={isMobile}
               />
-              <ResizableHandle key="handle" withHandle className="h-1 my-4 bg-transparent hover:bg-zinc-800/30 transition-colors" />
+              <ResizableHandle key="handle" withHandle className="h-1 p-4 bg-transparent hover:bg-zinc-800/30 transition-colors" />
               <BuildingListPanel
                 buildings={buildings}
                 selectedDate={selectedDate}
@@ -181,7 +181,7 @@ export default function Home() {
                 onDateChange={handleDateChange}
                 onLiveChange={handleLiveChange}
               />
-              <ResizableHandle key="handle" withHandle className="w-1 mx-4 bg-transparent hover:bg-zinc-800/30 transition-colors" />
+              <ResizableHandle key="handle" withHandle className="w-11 p-4 bg-transparent transition-colors" />
               <MapPanel
                 buildings={buildings}
                 selectedDate={selectedDate}
