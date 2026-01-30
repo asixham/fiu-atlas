@@ -2,6 +2,7 @@
 
 import { BuildingList } from '@/components/building-list';
 import { TimeSelector } from '@/components/time-selector';
+import { FeedbackModal } from '@/components/feedback-modal';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ResizablePanel } from '@/components/ui/resizable';
 import { Building } from '@/lib/fiu-data';
@@ -47,7 +48,11 @@ export function BuildingListPanel({
   return (
     <ResizablePanel key="building-list" defaultSize={50} minSize={20} collapsible className="flex flex-col overflow-hidden pt-4">
       <div className="flex flex-col overflow-hidden h-full">
-        <Header />
+        {/* Header */}
+        <div className='flex items-center px-4 justify-between'>
+          <Header />
+          <FeedbackModal />
+        </div>
         {/* Controls */}
         <div className="flex items-center px-4 gap-3 py-4">
           {/* Search - full width */}
@@ -94,16 +99,16 @@ export function BuildingListPanel({
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {/* Live indicator - clickable to activate live mode */}
-                  <button
-                    type="button"
+                  <div
+                    role="button" // Use div instead of button to avoid nesting error
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e.stopPropagation(); // Prevents the Popover from opening
                       // Always set back to live mode when clicked
                       const newDate = new Date();
                       onDateChange(newDate);
                       onLiveChange(true);
                     }}
-                    className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded transition-colors ${isLive
+                    className={`cursor-pointer flex items-center gap-1.5 px-1.5 py-0.5 rounded transition-colors ${isLive
                       ? 'text-green-500 hover:text-green-400'
                       : 'text-zinc-500 hover:text-zinc-400'
                       }`}
@@ -121,7 +126,7 @@ export function BuildingListPanel({
                       <span className="h-2 w-2 flex-shrink-0 rounded-full bg-zinc-500" />
                     )}
                     <span className="text-xs font-medium whitespace-nowrap">Live</span>
-                  </button>
+                  </div>
                   {/* Date and time */}
                   <span className="text-xs whitespace-nowrap truncate">
                     {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {selectedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -150,7 +155,7 @@ export function BuildingListPanel({
             type="button"
             onClick={onLocationToggle}
             disabled={locationLoading}
-            className={`flex h-9 w-9 items-center justify-center rounded-md border px-2 transition-colors cursor-pointer ${locationEnabled
+            className={`flex h-9 items-center justify-center rounded-md border px-3 transition-colors cursor-pointer ${locationEnabled
               ? 'border-blue-600/50 bg-blue-500/10 text-blue-400'
               : 'border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground'
               }`}
@@ -159,7 +164,7 @@ export function BuildingListPanel({
             {locationLoading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             ) : (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>

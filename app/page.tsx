@@ -123,6 +123,7 @@ export default function Home() {
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-foreground" />
             <Header />
             {/* <p className="text-sm text-muted-foreground">Loading campus data...</p> */}
+            <button>Feedback</button>
           </div>
         </div>
       )}
