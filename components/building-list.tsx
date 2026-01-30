@@ -15,6 +15,7 @@ import { Building2, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { RoomTimeline } from './room-timeline';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface BuildingListProps {
   buildings: Building[];
@@ -61,10 +62,10 @@ export function BuildingList({
     }
   }, [selectedBuildingId]);
 
-  const handleBuildingClick = (buildingId: string) => {
-    const newExpanded = expandedBuilding === buildingId ? null : buildingId;
+  const handleBuildingOpenChange = (buildingId: string, open: boolean) => {
+    const newExpanded = open ? buildingId : null;
     setExpandedBuilding(newExpanded);
-    setExpandedRoom(null); // Close any open room when switching buildings
+    setExpandedRoom(null);
     onBuildingSelect?.(newExpanded);
 
     if (newExpanded) {
@@ -72,6 +73,10 @@ export function BuildingList({
         scrollBuildingIntoView(newExpanded);
       });
     }
+  };
+
+  const handleRoomOpenChange = (roomId: string, open: boolean) => {
+    setExpandedRoom(open ? roomId : null);
   };
 
   const handleRoomClick = (roomId: string, e: React.MouseEvent) => {
@@ -161,16 +166,17 @@ export function BuildingList({
             <div
               key={building.id}
               ref={(el) => { buildingRefs.current[building.id] = el; }}
-              className={cn(
-                'bg-zinc-800 overflow-hidden rounded-2xl transition-all',
-                isSelected && ''
-              )}
+              className="bg-zinc-800 overflow-hidden rounded-2xl transition-all"
             >
-              {/* Building Header */}
-              <button
-                onClick={() => handleBuildingClick(building.id)}
-                className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-zinc-700/40 cursor-pointer"
+              <Collapsible
+                open={isExpanded}
+                onOpenChange={(open) => handleBuildingOpenChange(building.id, open)}
               >
+                {/* Building Header */}
+                <CollapsibleTrigger asChild>
+                  <button
+                    className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-zinc-700/40 cursor-pointer"
+                  >
                 {/* <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-900">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </div> */}
@@ -241,11 +247,11 @@ export function BuildingList({
                     )}
                   />
                 </div>
-              </button>
+                  </button>
+                </CollapsibleTrigger>
 
-              {/* Rooms Dropdown */}
-              {isExpanded && (
-                <div className="border-t border-zinc-800">
+                {/* Rooms Dropdown */}
+                <CollapsibleContent className="border-t border-zinc-800">
                   <div className="max-h-100 pb-2 overflow-y-auto custom-scrollbar">
                     {rooms.length === 0 ? (
                       <div className="px-4 py-6 text-center text-base text-muted-foreground">
@@ -258,18 +264,21 @@ export function BuildingList({
                           const isRoomExpanded = expandedRoom === room.id;
 
                           return (
-                            <div
+                            <Collapsible
                               key={room.id}
+                              open={isRoomExpanded}
+                              onOpenChange={(open) => handleRoomOpenChange(room.id, open)}
                               className={cn(
                                 'transition-colors bg-zinc-800',
                                 status.isOccupied ? 'border-l-2 border-l-destructive/30' : 'border-l-2 border-l-success/30'
                               )}
                             >
                               {/* Room Header */}
-                              <button
-                                onClick={(e) => handleRoomClick(room.id, e)}
-                                className={cn('flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-zinc-700/40 cursor-pointer', isRoomExpanded && 'bg-zinc-700/20')}
-                              >
+                              <CollapsibleTrigger asChild>
+                                <button
+                                  onClick={(e) => handleRoomClick(room.id, e)}
+                                  className={cn('flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-zinc-700/40 cursor-pointer', isRoomExpanded && 'bg-zinc-700/20')}
+                                >
                                 <div className="flex items-center gap-3">
                                   <span
                                     className={cn(
@@ -311,25 +320,26 @@ export function BuildingList({
                                     )}
                                   />
                                 </div>
-                              </button>
+                                </button>
+                              </CollapsibleTrigger>
 
                               {/* Room Timeline */}
-                              {isRoomExpanded && (
+                              <CollapsibleContent>
                                 <div className="px-4 pb-3 pt-1 bg-zinc-700/20">
                                   <RoomTimeline
                                     sessions={room.sessions}
                                     selectedDate={selectedDate}
                                   />
                                 </div>
-                              )}
-                            </div>
+                              </CollapsibleContent>
+                            </Collapsible>
                           );
                         })}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           );
         })}
