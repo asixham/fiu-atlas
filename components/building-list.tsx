@@ -23,6 +23,7 @@ interface BuildingListProps {
   selectedBuildingId?: string;
   onBuildingSelect?: (buildingId: string | null) => void;
   searchQuery?: string;
+  scrollContainerRef?: React.RefObject<HTMLElement>;
 }
 
 export function BuildingList({
@@ -31,31 +32,69 @@ export function BuildingList({
   selectedBuildingId,
   onBuildingSelect,
   searchQuery = '',
+  scrollContainerRef,
 }: BuildingListProps) {
   const [expandedBuilding, setExpandedBuilding] = useState<string | null>(null);
   const [expandedRoom, setExpandedRoom] = useState<string | null>(null);
   const buildingRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const collapseDurationRef = useRef<number>(220);
+
+  const findScrollContainer = (element: HTMLElement) => {
+    if (scrollContainerRef?.current) return scrollContainerRef.current;
+    let parent: HTMLElement | null = element.parentElement;
+    while (parent) {
+      const style = window.getComputedStyle(parent);
+      if (
+        parent.scrollHeight > parent.clientHeight &&
+        /(auto|scroll|overlay)/.test(style.overflowY)
+      ) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
+  };
 
   const scrollBuildingIntoView = (buildingId: string) => {
     const element = buildingRefs.current[buildingId];
     if (!element) return;
 
-    element.scrollIntoView({
+    const container = findScrollContainer(element);
+    if (!container) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    const computed = window.getComputedStyle(container);
+    const paddingTop = parseFloat(computed.paddingTop || '0');
+    const offset = elementRect.top - containerRect.top;
+    const target = container.scrollTop + offset - paddingTop - 26;
+    const maxScroll = container.scrollHeight - container.clientHeight;
+    const clamped = Math.max(0, Math.min(target, maxScroll));
+
+    container.scrollTo({
+      top: clamped,
       behavior: 'smooth',
-      block: 'start',
-      inline: 'nearest',
     });
+  };
+
+  const scheduleScrollToBuilding = (buildingId: string, hadExpanded: boolean) => {
+    const delay = hadExpanded ? collapseDurationRef.current : 0;
+    window.setTimeout(() => {
+      requestAnimationFrame(() => scrollBuildingIntoView(buildingId));
+    }, delay);
   };
 
   // Sync expanded state with selectedBuildingId (for map clicks)
   useEffect(() => {
     if (selectedBuildingId && selectedBuildingId !== expandedBuilding) {
+      const hadExpanded = Boolean(expandedBuilding);
       setExpandedBuilding(selectedBuildingId);
       setExpandedRoom(null);
       // Scroll the building into view
-      requestAnimationFrame(() => {
-        scrollBuildingIntoView(selectedBuildingId);
-      });
+      scheduleScrollToBuilding(selectedBuildingId, hadExpanded);
     } else if (!selectedBuildingId && expandedBuilding) {
       setExpandedBuilding(null);
       setExpandedRoom(null);
@@ -63,15 +102,14 @@ export function BuildingList({
   }, [selectedBuildingId]);
 
   const handleBuildingOpenChange = (buildingId: string, open: boolean) => {
+    const hadExpanded = Boolean(expandedBuilding && expandedBuilding !== buildingId);
     const newExpanded = open ? buildingId : null;
     setExpandedBuilding(newExpanded);
     setExpandedRoom(null);
     onBuildingSelect?.(newExpanded);
 
     if (newExpanded) {
-      requestAnimationFrame(() => {
-        scrollBuildingIntoView(newExpanded);
-      });
+      scheduleScrollToBuilding(newExpanded, hadExpanded);
     }
   };
 
