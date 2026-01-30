@@ -64,13 +64,13 @@ export function FeedbackModal() {
                 className="h-9 px-3 rounded-md border border-zinc-700 bg-transparent text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-colors cursor-pointer text-sm flex items-center gap-2 w-fit"
             >
                 <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                {/* <span className="text-xs font-medium whitespace-nowrap">Feedback</span> */}
+                {/* <span className="text-xs font-medium whitespace-nowrap">Share Feedback</span> */}
             </button>
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>Send us feedback</DialogTitle>
+                        <DialogTitle>Share Feedback</DialogTitle>
                         <DialogDescription>
                             Help us improve by sharing your thoughts and suggestions.
                         </DialogDescription>

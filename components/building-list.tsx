@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef } from "react"
+import Link from 'next/link';
+import { GithubIcon, LinkedinIcon } from "lucide-react";
 
 import {
   Building,
@@ -301,6 +303,19 @@ export function BuildingList({
           </div>
         );
       })}
+      <div className="py-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link target="_blank" href="https://github.com/asixham/fiu-atlas" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <GithubIcon className="h-5 w-5" />
+          </Link>
+          <Link target="_blank" href="https://linkedin.com/in/xnthiny" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <LinkedinIcon className="h-5 w-5" />
+          </Link>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">© 2026 Made by Anthony Ham.</span>
+        </div>
+      </div>
     </div>
   );
 }
