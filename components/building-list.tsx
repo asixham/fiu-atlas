@@ -367,6 +367,10 @@ export function BuildingList({
                                   <RoomTimeline
                                     sessions={room.sessions}
                                     selectedDate={selectedDate}
+                                    roomId={room.id}
+                                    roomNumber={room.number}
+                                    buildingId={building.id}
+                                    buildingName={building.name}
                                   />
                                 </div>
                               </CollapsibleContent>
