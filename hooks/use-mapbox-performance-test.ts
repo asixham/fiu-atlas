@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 
 type PerformanceResult = {
@@ -57,7 +57,19 @@ export const useMapboxPerformanceTest = (
     return cached;
   });
   const [isTesting, setIsTesting] = useState(() => !Boolean(result));
+  const [benchmarkNonce, setBenchmarkNonce] = useState(0);
   const cleanupRef = useRef<(() => void) | null>(null);
+
+  const rerunBenchmark = useCallback(() => {
+    if (!isBrowser) return;
+
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+    window.localStorage.removeItem(cacheKey);
+    setResult(null);
+    setIsTesting(true);
+    setBenchmarkNonce((nonce) => nonce + 1);
+  }, [cacheKey]);
 
   useEffect(() => {
     if (!isBrowser) return;
@@ -201,11 +213,12 @@ export const useMapboxPerformanceTest = (
       cleanupRef.current?.();
       cleanupRef.current = null;
     };
-  }, [accessToken, cacheKey, durationMs, enableLogging, fpsThreshold, result]);
+  }, [accessToken, cacheKey, durationMs, enableLogging, fpsThreshold, result, benchmarkNonce]);
 
   return {
     shouldUseLiteMode: result?.shouldUseLiteMode ?? null,
     fps: result?.fps ?? null,
     isTesting,
+    rerunBenchmark,
   };
 };
