@@ -6,6 +6,8 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { InfoIcon } from 'lucide-react';
 
+import { useMapboxPerformanceTest } from '@/hooks/use-mapbox-performance-test';
+
 import {
   Dialog,
   DialogContent,
@@ -47,12 +49,19 @@ export function CampusMap({
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [isPerformanceMode, setIsPerformanceMode] = useState<boolean | null>(null);
+  const [heuristicPerformanceMode, setHeuristicPerformanceMode] = useState<boolean | null>(null);
   const [performanceModalOpen, setPerformanceModalOpen] = useState(false);
   const [manualPerformanceOverride, setManualPerformanceOverride] = useState<boolean | null>(null);
   const [manualOverrideLoaded, setManualOverrideLoaded] = useState(false);
 
   // FIU MMC campus center coordinates
   const FIU_CENTER: [number, number] = [-80.37621507143407, 25.75677363629563];
+
+  const { shouldUseLiteMode, fps: benchmarkFps, isTesting: isBenchmarking } = useMapboxPerformanceTest({
+    accessToken: mapboxToken,
+    cacheKey: 'fiu-atlas-performance-benchmark',
+    enableLogging: process.env.NODE_ENV !== 'production',
+  });
 
   useEffect(() => {
     // Fetch token from server API to avoid exposing in client bundle
@@ -97,11 +106,6 @@ export function CampusMap({
   useEffect(() => {
     if (typeof window === 'undefined' || !manualOverrideLoaded) return;
 
-    if (manualPerformanceOverride !== null) {
-      setIsPerformanceMode(manualPerformanceOverride);
-      return;
-    }
-
     const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const detectPerformanceNeeds = (prefersReducedMotion: boolean) => {
       const lowCores = typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? navigator.hardwareConcurrency < 4 : false;
@@ -109,7 +113,7 @@ export function CampusMap({
       const lowMemory = typeof deviceMemory === 'number' ? deviceMemory < 4 : false;
 
       const shouldReduce = prefersReducedMotion || lowCores || lowMemory;
-      setIsPerformanceMode(shouldReduce);
+      setHeuristicPerformanceMode(shouldReduce);
     };
 
     detectPerformanceNeeds(mediaQuery?.matches ?? false);
@@ -134,7 +138,25 @@ export function CampusMap({
         mediaQuery.removeListener(handleChange);
       }
     };
-  }, [isMobile, manualPerformanceOverride, manualOverrideLoaded]);
+  }, [isMobile, manualOverrideLoaded]);
+
+  useEffect(() => {
+    if (!manualOverrideLoaded) return;
+
+    if (manualPerformanceOverride !== null) {
+      setIsPerformanceMode(manualPerformanceOverride);
+      return;
+    }
+
+    if (shouldUseLiteMode !== null) {
+      setIsPerformanceMode(shouldUseLiteMode);
+      return;
+    }
+
+    if (heuristicPerformanceMode !== null) {
+      setIsPerformanceMode(heuristicPerformanceMode);
+    }
+  }, [manualOverrideLoaded, manualPerformanceOverride, shouldUseLiteMode, heuristicPerformanceMode]);
 
   const effectivePerformanceMode = useMemo(() => {
     if (manualPerformanceOverride !== null) {
@@ -552,7 +574,15 @@ export function CampusMap({
       )}
       <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-zinc-900/80 px-4 py-2 text-sm font-medium text-muted-foreground">
         <span>
-          {effectivePerformanceMode ? 'Performance mode enabled' : 'Performance mode off'}
+          {manualPerformanceOverride !== null
+            ? manualPerformanceOverride
+              ? 'Performance mode enabled (manual)'
+              : 'Performance mode off (manual)'
+            : isBenchmarking || effectivePerformanceMode === null
+            ? 'Calibrating performance...'
+            : effectivePerformanceMode
+            ? 'Performance mode enabled'
+            : 'Performance mode off'}
         </span>
         <button
           type="button"
@@ -575,12 +605,16 @@ export function CampusMap({
               <div>
                 <p className="text-foreground text-sm font-medium">Performance mode</p>
                 <p className="text-xs text-muted-foreground">Toggle to balance smoothness and visuals.</p>
+                {benchmarkFps !== null && (
+                  <p className="text-xs text-muted-foreground/70">Recent benchmark: {benchmarkFps.toFixed(1)} fps</p>
+                )}
               </div>
               <Switch
                 checked={effectivePerformanceMode ?? false}
                 onCheckedChange={(checked) => {
                   setManualPerformanceOverride(checked);
                 }}
+                disabled={isBenchmarking}
               />
             </div>
           </div>
