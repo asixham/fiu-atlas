@@ -43,6 +43,15 @@ export default function Home() {
       return;
     }
 
+    const isSecure =
+      typeof window !== 'undefined' &&
+      (window.isSecureContext || ['localhost', '127.0.0.1'].includes(window.location.hostname));
+
+    if (!isSecure) {
+      alert('Location sharing requires HTTPS or localhost. Open the app via http://localhost:3000 or a secure tunnel to enable this feature.');
+      return;
+    }
+
     setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -53,7 +62,15 @@ export default function Home() {
       (error) => {
         console.error('Error getting location:', error);
         setLocationLoading(false);
-        alert('Unable to get your location. Please check your browser permissions.');
+        if (error.code === error.PERMISSION_DENIED) {
+          alert('Location access was denied. Please allow access in your browser permissions to enable this feature.');
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          alert('Location information is unavailable. Try again in a few moments.');
+        } else if (error.code === error.TIMEOUT) {
+          alert('Timed out while retrieving your location. Please try again.');
+        } else {
+          alert('Unable to get your location. Please check your browser permissions.');
+        }
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );

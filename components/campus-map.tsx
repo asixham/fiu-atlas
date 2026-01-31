@@ -171,9 +171,37 @@ export function CampusMap({
       const status = getStatus();
 
       // Google Maps directions URL
-      const directionsUrl = userLocation
-        ? `https://www.google.com/maps/dir/?api=1&origin=${userLocation[1]},${userLocation[0]}&destination=${building.coordinates[1]},${building.coordinates[0]}&travelmode=walking`
-        : null;
+      const directionsUrl = (() => {
+        const base = 'https://www.google.com/maps/dir/?api=1';
+        const destination = `destination=${building.coordinates[1]},${building.coordinates[0]}`;
+        const travel = 'travelmode=walking';
+        if (userLocation) {
+          const origin = `origin=${userLocation[1]},${userLocation[0]}`;
+          return `${base}&${origin}&${destination}&${travel}`;
+        }
+        return `${base}&${destination}&${travel}`;
+      })();
+
+      const baseButtonStyle = 'display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 500; text-decoration: none; transition: all 0.18s ease; border: 1px solid;';
+      const buttonPalette = userLocation
+        ? {
+            baseBg: 'rgba(59,130,246,0.14)',
+            baseBorder: 'rgba(96,165,250,0.55)',
+            baseColor: '#bfdbfe',
+            hoverBg: 'rgba(59,130,246,0.24)',
+            hoverBorder: 'rgba(96,165,250,0.75)',
+            hoverColor: '#e0f2fe',
+          }
+        : {
+            baseBg: 'rgba(39,39,42,0.6)',
+            baseBorder: 'rgba(63,63,70,0.8)',
+            baseColor: '#d4d4d8',
+            hoverBg: 'rgba(63,63,70,0.85)',
+            hoverBorder: 'rgba(82,82,91,0.9)',
+            hoverColor: '#f4f4f5',
+          };
+      const paletteStyle = `background: ${buttonPalette.baseBg}; border-color: ${buttonPalette.baseBorder}; color: ${buttonPalette.baseColor};`;
+      const hoverHandlers = `onmouseover="this.style.background='${buttonPalette.hoverBg}'; this.style.borderColor='${buttonPalette.hoverBorder}'; this.style.color='${buttonPalette.hoverColor}';" onmouseout="this.style.background='${buttonPalette.baseBg}'; this.style.borderColor='${buttonPalette.baseBorder}'; this.style.color='${buttonPalette.baseColor}';"`;
 
       return `
         <div style="padding: 2px 0; min-width: 150px;">
@@ -186,14 +214,12 @@ export function CampusMap({
           <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
             <div style="width: ${percentage}%; height: 100%; background: ${status.barColor}; border-radius: 2px;"></div>
           </div>
-          ${directionsUrl ? `
-            <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; padding: 6px 10px; background: #3b82f6; color: white; border-radius: 6px; font-size: 11px; font-weight: 500; text-decoration: none; transition: background 0.15s;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-              </svg>
-              Get Directions
-            </a>
-          ` : ''}
+          <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" style="${baseButtonStyle} ${paletteStyle}" ${hoverHandlers}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+            </svg>
+            Get Directions
+          </a>
         </div>
       `;
     },
@@ -570,17 +596,17 @@ export function CampusMap({
         </DialogContent>
       </Dialog>
       {/* Legend */}
-      <div className="absolute bottom-10 left-3 rounded-lg bg-zinc-900 p-2.5 backdrop-blur-sm">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+      <div className="absolute bottom-10 left-3 rounded-full bg-zinc-900/80 px-4 py-2 backdrop-blur-sm text-sm font-medium text-muted-foreground">
+        <div className="flex flex-row gap-5">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-[#22c55e]" />
             Available
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-[#f59e0b]" />
             Limited
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
             Full
           </div>
