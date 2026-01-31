@@ -571,7 +571,7 @@ export function CampusMap({
           <div className="flex flex-col gap-4 text-sm text-muted-foreground">
             <p>Your device might benefit from a lighter map experience. Performance mode reduces visual effects to keep things responsive.</p>
             <p>This mode lowers map detail, disables 3D rotation, and simplifies markers so older or battery-constrained devices render the map smoothly.</p>
-            <div className="flex items-center justify-between rounded-full border border-zinc-700/60 bg-zinc-900/60 px-6 py-3">
+            <div className="flex items-center justify-between rounded-full bg-zinc-800 px-6 py-3">
               <div>
                 <p className="text-foreground text-sm font-medium">Performance mode</p>
                 <p className="text-xs text-muted-foreground">Toggle to balance smoothness and visuals.</p>
