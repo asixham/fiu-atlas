@@ -28,7 +28,7 @@ export function TimeSelector({
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const minSelectableDate = new Date(todayStart);
-  minSelectableDate.setDate(minSelectableDate.getDate() + 1);
+  minSelectableDate.setDate(minSelectableDate.getDate());
 
   const effectiveSelectedDate = (() => {
     const dateOnly = new Date(selectedDate);
@@ -106,7 +106,6 @@ export function TimeSelector({
         onSelect={handleDateSelect}
         initialFocus
         fromDate={minSelectableDate}
-        disabled={{ before: minSelectableDate }}
       />
 
       {/* Time picker */}

@@ -296,7 +296,7 @@ export function BuildingList({
                         No room data available
                       </div>
                     ) : (
-                      <div className="divide-y divide-zinc-700">
+                      <div>
                         {rooms.map((room) => {
                           const status = getRoomStatus(room, selectedDate);
                           const isRoomExpanded = expandedRoom === room.id;
