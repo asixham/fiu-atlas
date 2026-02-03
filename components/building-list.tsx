@@ -318,12 +318,6 @@ export function BuildingList({
                                   className={cn('flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-zinc-700/40 cursor-pointer', isRoomExpanded && 'bg-zinc-700/20')}
                                 >
                                 <div className="flex items-center gap-3">
-                                  <span
-                                    className={cn(
-                                      'h-2 w-2 rounded-full shrink-0',
-                                      status.isOccupied ? 'bg-destructive' : 'bg-success'
-                                    )}
-                                  />
                                   <div>
                                     <div className="text-base font-medium text-foreground">
                                       Room {room.number}
