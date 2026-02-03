@@ -36,6 +36,7 @@ interface TimeBlock {
   widthPercent: number;
   blockKey: string;
   isPassingPeriod: boolean;
+  isPast: boolean;
 }
 
 const DAY_START = 7; // 7 AM
@@ -77,6 +78,7 @@ export function RoomTimeline({
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [tableMissing, setTableMissing] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   const mountedRef = useRef(true);
   const { toast } = useToast();
@@ -90,6 +92,31 @@ export function RoomTimeline({
 
   const dateKey = useMemo(() => formatAttendanceDateKey(selectedDate), [selectedDate]);
   const dayName = useMemo(() => DAYS_OF_WEEK[selectedDate.getDay()], [selectedDate]);
+  const selectedDayStart = useMemo(() => {
+    const day = new Date(selectedDate);
+    day.setHours(0, 0, 0, 0);
+    return day.getTime();
+  }, [selectedDate]);
+  const todayStart = useMemo(() => {
+    const today = new Date(currentTime);
+    today.setHours(0, 0, 0, 0);
+    return today.getTime();
+  }, [currentTime]);
+  const isPastDay = selectedDayStart < todayStart;
+  const allowAnnouncements = !isPastDay;
+  const isToday = allowAnnouncements && selectedDayStart === todayStart;
+
+  useEffect(() => {
+    if (!allowAnnouncements || !isToday) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, [allowAnnouncements, isToday]);
 
   const todaySessions = useMemo(() => {
     return sessions
@@ -99,20 +126,25 @@ export function RoomTimeline({
 
   const blocks = useMemo(() => {
     const result: TimeBlock[] = [];
-    let currentTime = `${String(DAY_START).padStart(2, '0')}:00`;
+    let currentTimeString = `${String(DAY_START).padStart(2, '0')}:00`;
     const endOfDay = `${String(DAY_END).padStart(2, '0')}:00`;
 
     for (const session of todaySessions) {
       const sessionStartMin = timeToMinutes(session.startTime);
       const sessionEndMin = timeToMinutes(session.endTime);
-      const currentMin = timeToMinutes(currentTime);
+      const currentMin = timeToMinutes(currentTimeString);
 
       if (sessionStartMin > currentMin) {
-        const gapStart = currentTime;
+        const gapStart = currentTimeString;
         const gapEnd = session.startTime;
         const gapWidth = timeToPercent(gapEnd) - timeToPercent(gapStart);
         const gapMinutes = timeToMinutes(gapEnd) - timeToMinutes(gapStart);
         const isPassingPeriod = gapMinutes > 0 && gapMinutes < 30;
+        const [gapStartHour, gapStartMinute] = gapStart.split(':').map(Number);
+        const [gapEndHour, gapEndMinute] = gapEnd.split(':').map(Number);
+        const blockEndTime = new Date(selectedDate);
+        blockEndTime.setHours(gapEndHour, gapEndMinute, 0, 0);
+        const blockIsPast = isToday && blockEndTime.getTime() <= currentTime.getTime();
 
         if (gapWidth > 0) {
           result.push({
@@ -123,6 +155,7 @@ export function RoomTimeline({
             widthPercent: gapWidth,
             blockKey: makeAttendanceBlockKey(gapStart, gapEnd),
             isPassingPeriod,
+            isPast: blockIsPast,
           });
         }
       }
@@ -144,27 +177,33 @@ export function RoomTimeline({
             widthPercent: width,
             blockKey: makeAttendanceBlockKey(clippedStart, session.endTime),
             isPassingPeriod: false,
+            isPast: false,
           });
         }
       }
 
-      currentTime = session.endTime;
+      currentTimeString = session.endTime;
     }
 
-    if (timeToMinutes(endOfDay) > timeToMinutes(currentTime)) {
-      const width = timeToPercent(endOfDay) - timeToPercent(currentTime);
-      const gapMinutes = timeToMinutes(endOfDay) - timeToMinutes(currentTime);
+    if (timeToMinutes(endOfDay) > timeToMinutes(currentTimeString)) {
+      const width = timeToPercent(endOfDay) - timeToPercent(currentTimeString);
+      const gapMinutes = timeToMinutes(endOfDay) - timeToMinutes(currentTimeString);
       const isPassingPeriod = gapMinutes > 0 && gapMinutes < 30;
+      const [gapEndHour, gapEndMinute] = endOfDay.split(':').map(Number);
+      const blockEndTime = new Date(selectedDate);
+      blockEndTime.setHours(gapEndHour, gapEndMinute, 0, 0);
+      const blockIsPast = isToday && blockEndTime.getTime() <= currentTime.getTime();
 
       if (width > 0) {
         result.push({
-          startTime: currentTime,
+          startTime: currentTimeString,
           endTime: endOfDay,
           isOccupied: false,
-          startPercent: timeToPercent(currentTime),
+          startPercent: timeToPercent(currentTimeString),
           widthPercent: width,
-          blockKey: makeAttendanceBlockKey(currentTime, endOfDay),
+          blockKey: makeAttendanceBlockKey(currentTimeString, endOfDay),
           isPassingPeriod,
+          isPast: blockIsPast,
         });
       }
     }
@@ -181,32 +220,42 @@ export function RoomTimeline({
         widthPercent: 100,
         blockKey: makeAttendanceBlockKey(start, end),
         isPassingPeriod: gapMinutes > 0 && gapMinutes < 30,
+        isPast: isToday && new Date(selectedDate).setHours(DAY_END, 0, 0, 0) <= currentTime.getTime(),
       });
     }
 
     return result;
-  }, [todaySessions]);
+  }, [currentTime, isToday, selectedDate, todaySessions]);
 
   const hasAvailableBlocks = useMemo(
-    () => blocks.some((block) => !block.isOccupied && !block.isPassingPeriod),
-    [blocks]
+    () =>
+      allowAnnouncements &&
+      blocks.some((block) => !block.isOccupied && !block.isPassingPeriod && !block.isPast),
+    [allowAnnouncements, blocks]
   );
 
   const selectedBlock = useMemo(
     () =>
-      blocks.find(
-        (block) => !block.isOccupied && !block.isPassingPeriod && block.blockKey === selectedBlockKey
-      ) ?? null,
-    [blocks, selectedBlockKey]
+      allowAnnouncements
+        ? blocks.find(
+          (block) =>
+            !block.isOccupied && !block.isPassingPeriod && !block.isPast && block.blockKey === selectedBlockKey
+        ) ?? null
+        : null,
+    [allowAnnouncements, blocks, selectedBlockKey]
   );
 
-  const selectedCount = selectedBlockKey ? snapshot.counts[selectedBlockKey] ?? 0 : 0;
-  const selectedUserRecordId = selectedBlockKey ? snapshot.userRecordIds[selectedBlockKey] : undefined;
-  const userHasJoinedSelected = Boolean(selectedUserRecordId);
+  const selectedCount = allowAnnouncements && selectedBlockKey ? snapshot.counts[selectedBlockKey] ?? 0 : 0;
+  const selectedUserRecordId = allowAnnouncements && selectedBlockKey ? snapshot.userRecordIds[selectedBlockKey] : undefined;
+  const userHasJoinedSelected = allowAnnouncements && Boolean(selectedUserRecordId) && Boolean(selectedBlock);
 
   const hoveredCount = hoveredBlock ? snapshot.counts[hoveredBlock.blockKey] ?? 0 : 0;
   const hoveredUserJoined = hoveredBlock
-    ? !hoveredBlock.isOccupied && !hoveredBlock.isPassingPeriod && Boolean(snapshot.userRecordIds[hoveredBlock.blockKey])
+    ? allowAnnouncements &&
+      !hoveredBlock.isOccupied &&
+      !hoveredBlock.isPassingPeriod &&
+      !hoveredBlock.isPast &&
+      Boolean(snapshot.userRecordIds[hoveredBlock.blockKey])
     : false;
 
   const handleMouseEnter = useCallback(
@@ -225,11 +274,11 @@ export function RoomTimeline({
   const handleMouseLeave = useCallback(() => setHoveredBlock(null), []);
 
   const handleBlockClick = useCallback((block: TimeBlock) => {
-    if (block.isOccupied || block.isPassingPeriod || snapshotLoading) return;
+    if (block.isOccupied || block.isPassingPeriod || block.isPast || snapshotLoading || !allowAnnouncements) return;
     setActionError(null);
     setHoveredBlock(null);
     setSelectedBlockKey((prev) => (prev === block.blockKey ? null : block.blockKey));
-  }, [snapshotLoading]);
+  }, [allowAnnouncements, snapshotLoading]);
 
   const fetchSnapshot = useCallback(async () => {
     setSnapshotLoading(true);
@@ -276,15 +325,25 @@ export function RoomTimeline({
     if (
       selectedBlockKey &&
       !blocks.some(
-        (block) => block.blockKey === selectedBlockKey && !block.isOccupied && !block.isPassingPeriod
+        (block) =>
+          block.blockKey === selectedBlockKey &&
+          !block.isOccupied &&
+          !block.isPassingPeriod &&
+          !block.isPast
       )
     ) {
       setSelectedBlockKey(null);
     }
   }, [blocks, selectedBlockKey]);
 
+  useEffect(() => {
+    if (!allowAnnouncements) {
+      setSelectedBlockKey(null);
+    }
+  }, [allowAnnouncements]);
+
   const handleAnnounce = useCallback(async () => {
-    if (!selectedBlock) return;
+    if (!selectedBlock || !allowAnnouncements || selectedBlock.isPast) return;
 
     setActionLoading(true);
     setActionError(null);
@@ -342,10 +401,10 @@ export function RoomTimeline({
         setActionLoading(false);
       }
     }
-  }, [selectedBlock, roomId, dateKey, roomNumber, buildingId, buildingName, fetchSnapshot, toast]);
+  }, [allowAnnouncements, selectedBlock, roomId, dateKey, roomNumber, buildingId, buildingName, fetchSnapshot, toast]);
 
   const handleWithdraw = useCallback(async () => {
-    if (!selectedUserRecordId || !selectedBlock) return;
+    if (!selectedUserRecordId || !selectedBlock || !allowAnnouncements || selectedBlock.isPast) return;
 
     setActionLoading(true);
     setActionError(null);
@@ -393,7 +452,7 @@ export function RoomTimeline({
         setActionLoading(false);
       }
     }
-  }, [selectedUserRecordId, selectedBlock, fetchSnapshot, toast]);
+  }, [allowAnnouncements, selectedUserRecordId, selectedBlock, fetchSnapshot, toast]);
 
   const currentTimePercent = timeToPercent(
     `${String(selectedDate.getHours()).padStart(2, '0')}:${String(selectedDate.getMinutes()).padStart(2, '0')}`
@@ -421,8 +480,17 @@ export function RoomTimeline({
                   ? 'bg-red-400 hover:bg-red-500 cursor-not-allowed'
                   : block.isPassingPeriod
                     ? 'bg-amber-300 text-amber-900 cursor-not-allowed'
-                    : 'bg-green-400 hover:bg-green-500 cursor-pointer',
-                isSelected && !block.isOccupied && !block.isPassingPeriod && 'shimmer',
+                    : block.isPast
+                      ? 'bg-green-500 text-zinc-200 cursor-not-allowed'
+                      : allowAnnouncements
+                        ? 'bg-green-500 hover:bg-green-500 cursor-pointer'
+                        : 'bg-green-500/70 cursor-not-allowed',
+                isSelected &&
+                  !block.isOccupied &&
+                  !block.isPassingPeriod &&
+                  !block.isPast &&
+                  allowAnnouncements &&
+                  'shimmer outline outline-3 outline-green-900/60 -outline-offset-3'
               )}
               style={{
                 left: `calc(${block.startPercent}% + ${index === 0 ? 0 : BLOCK_GAP_PX / 2}px)`,
@@ -433,26 +501,46 @@ export function RoomTimeline({
               onMouseEnter={(event) => handleMouseEnter(block, event)}
               onMouseLeave={handleMouseLeave}
               onClick={() => {
-                if (!block.isOccupied && !block.isPassingPeriod) {
+                if (!block.isOccupied && !block.isPassingPeriod && !block.isPast) {
                   handleBlockClick(block);
                 }
               }}
-              role={block.isOccupied || block.isPassingPeriod || snapshotLoading ? undefined : 'button'}
+              role={
+                block.isOccupied ||
+                block.isPassingPeriod ||
+                block.isPast ||
+                snapshotLoading ||
+                !allowAnnouncements
+                  ? undefined
+                  : 'button'
+              }
               aria-label={
                 block.isOccupied
                   ? `Occupied from ${formatTime(block.startTime)} to ${formatTime(block.endTime)}`
                   : block.isPassingPeriod
                     ? `Passing period ${formatTime(block.startTime)} to ${formatTime(block.endTime)}`
+                    : block.isPast
+                      ? `Time has passed for ${formatTime(block.startTime)} to ${formatTime(block.endTime)}`
                     : `Available from ${formatTime(block.startTime)} to ${formatTime(block.endTime)}`
               }
             >
-              {!block.isOccupied && !block.isPassingPeriod && !snapshotLoading && blockCount > 0 && (
+              {!block.isOccupied &&
+                !block.isPassingPeriod &&
+                !block.isPast &&
+                !snapshotLoading &&
+                allowAnnouncements &&
+                blockCount > 0 && (
                 <div className="pointer-events-none absolute right-1 top-1 flex items-center gap-1 rounded-full bg-green-100/90 px-1.5 py-0.5 text-[10px] font-semibold text-green-900 shadow-sm">
                   <UserPlus className="h-3 w-3" />
                   <span>{blockCount}</span>
                 </div>
               )}
-              {!block.isOccupied && !block.isPassingPeriod && !snapshotLoading && userJoinedBlock && (
+              {!block.isOccupied &&
+                !block.isPassingPeriod &&
+                !block.isPast &&
+                !snapshotLoading &&
+                allowAnnouncements &&
+                userJoinedBlock && (
                 <div className="pointer-events-none absolute left-1 bottom-1 rounded-full bg-green-600 p-1 text-white shadow-sm">
                   <Check className="h-3 w-3" />
                 </div>
@@ -497,6 +585,10 @@ export function RoomTimeline({
           <span className="h-2 w-2 rounded-full bg-red-500" />
           <span className="text-[10px] text-muted-foreground">Occupied</span>
         </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-amber-300" />
+          <span className="text-[10px] text-muted-foreground">Passing</span>
+        </div>
       </div>
 
       {hoveredBlock && (
@@ -528,6 +620,11 @@ export function RoomTimeline({
               <div className="space-y-0.5 text-muted-foreground">
                 <div className="text-amber-300">Passing period</div>
                 <div>Less than 30 minutes between classes.</div>
+              </div>
+            ) : hoveredBlock.isPast ? (
+              <div className="space-y-0.5 text-muted-foreground">
+                <div className="text-zinc-200">Time passed</div>
+                <div>This block is no longer open for attendance.</div>
               </div>
             ) : (
               <div className="space-y-0.5 text-muted-foreground">
@@ -603,7 +700,7 @@ export function RoomTimeline({
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          {userHasJoinedSelected ? (
+                          {userHasJoinedSelected && selectedBlock && !selectedBlock.isPast ? (
                             <Button
                               variant="outline"
                               size="sm"
@@ -623,7 +720,12 @@ export function RoomTimeline({
                               size="sm"
                               onClick={handleAnnounce}
                               className="rounded-full"
-                              disabled={actionLoading || snapshotLoading}
+                              disabled={
+                                actionLoading ||
+                                snapshotLoading ||
+                                !selectedBlock ||
+                                selectedBlock.isPast
+                              }
                             >
                               {actionLoading ? (
                                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin bg-transparent" />
@@ -648,13 +750,19 @@ export function RoomTimeline({
             </AccordionItem>
           </Accordion>
 
-          {selectedBlock ? null : hasAvailableBlocks ? (
-            <div className="mt-3 text-[11px] text-muted-foreground">
-              Click an available block to announce that you'll be in the room.
-            </div>
+          {allowAnnouncements ? (
+            selectedBlock ? null : hasAvailableBlocks ? (
+              <div className="mt-3 text-[11px] text-muted-foreground">
+                Click an available block to announce that you'll be in the room.
+              </div>
+            ) : (
+              <div className="mt-3 text-[11px] text-muted-foreground">
+                No upcoming time blocks remain for this room today.
+              </div>
+            )
           ) : (
             <div className="mt-3 text-[11px] text-muted-foreground">
-              No available time blocks remain for this room today.
+              Attendance announcements are only available for today and upcoming dates.
             </div>
           )}
         </>

@@ -8,8 +8,32 @@ import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/header';
 import useSWR from 'swr';
 
+function getMinimumSelectableDate() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 1);
+  return date;
+}
+
+function clampToSelectable(date: Date) {
+  const min = getMinimumSelectableDate();
+  if (date < min) {
+    const clamped = new Date(min);
+    clamped.setHours(date.getHours());
+    clamped.setMinutes(date.getMinutes());
+    clamped.setSeconds(date.getSeconds());
+    clamped.setMilliseconds(date.getMilliseconds());
+    return clamped;
+  }
+  return date;
+}
+
 export default function Home() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    now.setDate(now.getDate() + 1);
+    return now;
+  });
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -122,7 +146,7 @@ export default function Home() {
   };
 
   const handleDateChange = useCallback((date: Date) => {
-    setSelectedDate(date);
+    setSelectedDate(clampToSelectable(date));
   }, []);
 
   const handleLiveChange = useCallback((live: boolean) => {

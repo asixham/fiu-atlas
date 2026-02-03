@@ -5,6 +5,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Clock } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface TimeSelectorProps {
   selectedDate: Date;
@@ -24,8 +25,27 @@ export function TimeSelector({
   const hours = Array.from({ length: 24 }, (_, i) => i); // 12 AM to 11 PM
   const minutes = Array.from({ length: 60 }, (_, i) => i); // 0-59
 
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const minSelectableDate = new Date(todayStart);
+  minSelectableDate.setDate(minSelectableDate.getDate() + 1);
+
+  const effectiveSelectedDate = (() => {
+    const dateOnly = new Date(selectedDate);
+    dateOnly.setHours(0, 0, 0, 0);
+    if (dateOnly < minSelectableDate) {
+      const adjusted = new Date(minSelectableDate);
+      adjusted.setHours(selectedDate.getHours());
+      adjusted.setMinutes(selectedDate.getMinutes());
+      adjusted.setSeconds(selectedDate.getSeconds());
+      adjusted.setMilliseconds(selectedDate.getMilliseconds());
+      return adjusted;
+    }
+    return selectedDate;
+  })();
+
   const handleTimeChange = (type: 'hour' | 'minute', value: string) => {
-    const newDate = new Date(selectedDate);
+    const newDate = new Date(effectiveSelectedDate);
     if (type === 'hour') {
       newDate.setHours(parseInt(value));
     } else {
@@ -37,9 +57,11 @@ export function TimeSelector({
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      const newDate = new Date(date);
-      newDate.setHours(selectedDate.getHours());
-      newDate.setMinutes(selectedDate.getMinutes());
+      const newDate = new Date(date < minSelectableDate ? minSelectableDate : date);
+      newDate.setHours(effectiveSelectedDate.getHours());
+      newDate.setMinutes(effectiveSelectedDate.getMinutes());
+      newDate.setSeconds(effectiveSelectedDate.getSeconds());
+      newDate.setMilliseconds(effectiveSelectedDate.getMilliseconds());
       onDateChange(newDate);
       onLiveChange(false); // User manually changed date, no longer "now"
     }
@@ -49,6 +71,21 @@ export function TimeSelector({
     onDateChange(new Date());
     onLiveChange(true);
   };
+
+  useEffect(() => {
+    const dateOnly = new Date(selectedDate);
+    dateOnly.setHours(0, 0, 0, 0);
+    if (dateOnly < minSelectableDate) {
+      const adjusted = new Date(minSelectableDate);
+      adjusted.setHours(selectedDate.getHours());
+      adjusted.setMinutes(selectedDate.getMinutes());
+      adjusted.setSeconds(selectedDate.getSeconds());
+      adjusted.setMilliseconds(selectedDate.getMilliseconds());
+      if (adjusted.getTime() !== selectedDate.getTime()) {
+        onDateChange(adjusted);
+      }
+    }
+  }, [minSelectableDate, onDateChange, selectedDate]);
 
   const formatHour = (hour: number) => {
     const period = hour >= 12 ? 'PM' : 'AM';
@@ -65,9 +102,11 @@ export function TimeSelector({
       {/* Calendar */}
       <Calendar
         mode="single"
-        selected={selectedDate}
+        selected={effectiveSelectedDate}
         onSelect={handleDateSelect}
         initialFocus
+        fromDate={minSelectableDate}
+        disabled={{ before: minSelectableDate }}
       />
 
       {/* Time picker */}
@@ -79,7 +118,7 @@ export function TimeSelector({
 
         <div className="flex items-center gap-2">
           <Select
-            value={String(selectedDate.getHours())}
+            value={String(effectiveSelectedDate.getHours())}
             onValueChange={(value) => handleTimeChange('hour', value)}
           >
             <SelectTrigger className="h-9 gap-2 w-fit cursor-pointer bg-transparent border-zinc-700 hover:bg-zinc-700">
@@ -95,11 +134,11 @@ export function TimeSelector({
           </Select>
           <span className="text-muted-foreground">:</span>
           <Select
-            value={String(selectedDate.getMinutes())}
+            value={String(effectiveSelectedDate.getMinutes())}
             onValueChange={(value) => handleTimeChange('minute', value)}
           >
             <SelectTrigger className="h-9 gap-2 w-fit cursor-pointer bg-transparent border-zinc-700 hover:bg-zinc-700">
-              <SelectValue>{formatMinute(selectedDate.getMinutes())}</SelectValue>
+              <SelectValue>{formatMinute(effectiveSelectedDate.getMinutes())}</SelectValue>
             </SelectTrigger>
             <SelectContent className="max-h-[200px] bg-zinc-800">
               {minutes.map((minute) => (
