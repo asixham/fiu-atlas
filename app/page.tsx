@@ -158,6 +158,20 @@ export default function Home() {
 
   return (
     <div className="flex h-dvh z-50 flex-col overflow-hidden bg-zinc-900">
+      <header className="shrink-0 border-b border-amber-500/30 bg-amber-950/90 px-4 py-2.5 text-center text-sm text-amber-100">
+        <p>
+          FIU Atlas is no longer maintained — the occupancy data here is outdated and inaccurate. Want
+          to help bring it back? Email{' '}
+          <a
+            href="mailto:mail@anthonymham.com"
+            className="font-medium text-amber-300 underline underline-offset-2 hover:text-amber-200"
+          >
+            mail@anthonymham.com
+          </a>
+          .
+        </p>
+      </header>
+
       {isLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-900 backdrop-blur-lg">
           <div className="flex flex-col items-center gap-4">
